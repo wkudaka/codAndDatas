@@ -3,7 +3,7 @@ ccccccc....this program is to find the single attractors of a network.....ccccc
       implicit none
       integer i,j,k,ii,jj,iii,kk,kk1
       integer n
-      parameter(n=23)
+      parameter(n=11)
 
       real*8 matrix(n,n)
       integer gm(n,n),rm(n,n)
@@ -27,7 +27,7 @@ ccccccc....this program is to find the single attractors of a network.....ccccc
 	open(3,file="basin.dat",status="unknown")
 
       
-	open(4,file="Thelper_cell23.dat",status="old")   
+	open(4,file="Budding_yeast11.dat",status="old")   
       do i=1,n    !Input the network matrix
 	   read(4,100)matrix(i,1:n)
 	enddo
@@ -205,7 +205,7 @@ ccccccccccccccccccc.....the rules 1-7.........cccccccccccccccccccccccccccccccccc
 	tfp=1
       basnew=basold
       do i=1,n
-         !rule 1£ºif S_i=1 and r_{ji}=1, then S_j=0;
+         !rule 1ï¿½ï¿½if S_i=1 and r_{ji}=1, then S_j=0;
          do j=1,n
             if((j.ne.i).and.(basold(j)*rm(i,j).eq.1))then
 	         if (basnew(i).eq.1)then
@@ -218,7 +218,7 @@ ccccccccccccccccccc.....the rules 1-7.........cccccccccccccccccccccccccccccccccc
          enddo
 
         if(basold(i)>0)then
-        !rule 2£ºif S_i=1 and r_{ij}=1, then S_j=0;
+        !rule 2ï¿½ï¿½if S_i=1 and r_{ij}=1, then S_j=0;
            do j=1,n
               if(j.ne.i.and.(rm(i,j)>0))then
 	           if (basnew(j).eq.1)then
@@ -230,7 +230,7 @@ ccccccccccccccccccc.....the rules 1-7.........cccccccccccccccccccccccccccccccccc
               endif
            enddo
 
-        !rule 3£º if S_i=1, r_{ii}=1, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=1;
+        !rule 3ï¿½ï¿½ if S_i=1, r_{ii}=1, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=1;
            if(rm(i,i)>0)then
              logi=0
              do j=1,n
@@ -255,12 +255,19 @@ ccccccccccccccccccc.....the rules 1-7.........cccccccccccccccccccccccccccccccccc
 
         endif
       
-         !rule 5£ºif r_{ii}=1 and \sum_{j\ne i ({S_j}g_{ij})=0, then S_i=0;
+         !rule 5ï¿½ï¿½if r_{ii}=1 and \sum_{j\ne i ({S_j}g_{ij})=0, then S_i=0;
          if (rm(i,i)>0)then
             pan=1
             do j=1,n
                if (j.ne.i)then
-                  pan=pan.and.(gm(i,j)*basold(j).eq.0)
+							 		if (pan>=1)then
+										if (gm(i,j)*basold(j).eq.0)then
+											pan = 1
+										else 
+											pan = 0
+										endif
+									endif
+                  !pan=pan.and.(gm(i,j)*basold(j).eq.0)
                endif
             enddo
 
@@ -277,13 +284,20 @@ ccccccccccccccccccc.....the rules 1-7.........cccccccccccccccccccccccccccccccccc
            pan=1      
            do j=1,n
               if (j.ne.i)then
-                 pan=pan.and.(rm(i,j)*basold(j).eq.0)
+									if (pan>=1)then
+										if (rm(i,j)*basold(j).eq.0)then
+											pan = 1
+										else 
+											pan = 0
+										endif
+									endif
+                 !pan=pan.and.(rm(i,j)*basold(j).eq.0)
               endif
            enddo
 
-        !rule 6£º if g_{ii}=1 and \sum_{j\ne i} ({S_j}r_{ij})=0, then S_i=1;
+        !rule 6ï¿½ï¿½ if g_{ii}=1 and \sum_{j\ne i} ({S_j}r_{ij})=0, then S_i=1;
 
-	  !rule 7£ºif \sum_{j\ne i} ({S_j}r_{ij})=0, and there is a node j_0 such that S_{j_0}g_{ij_0}=1, then S_i=1.
+	  !rule 7ï¿½ï¿½if \sum_{j\ne i} ({S_j}r_{ij})=0, and there is a node j_0 such that S_{j_0}g_{ij_0}=1, then S_i=1.
 
 	   logi=0
 	   do j=1,n
@@ -302,7 +316,7 @@ ccccccccccccccccccc.....the rules 1-7.........cccccccccccccccccccccccccccccccccc
 	      endif
 	   endif
 
-	   !rule 4£ºif S_i=0 and \sum_{j\ne i} ({S_j}r_{ij})=0, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=0;
+	   !rule 4ï¿½ï¿½if S_i=0 and \sum_{j\ne i} ({S_j}r_{ij})=0, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=0;
 	   if((basold(i).eq.0).and.(pan>0))then
 	       do j=1,n
 	          if((j.ne.i).and.(gm(i,j)>0))then
