@@ -26,7 +26,7 @@ ccccccc....this program is to find the single attractors of a network.....ccccc
 	open(2,file="cputime.dat",status="unknown")
 	open(3,file="basin.dat",status="unknown")
 
-      
+    
 	open(4,file="Budding_yeast11.dat",status="old")   
       do i=1,n    !Input the network matrix
 	   read(4,100)matrix(i,1:n)
@@ -46,9 +46,7 @@ ccccccc....this program is to find the single attractors of a network.....ccccc
 
 	  call cpu_time(t1)
 
-  
         call checkrm(peak,rm,n)
-
         ncount=1
 	  ALLOCATE(bfnew1(ncount,n))
 	  do i=1,n
@@ -57,58 +55,54 @@ ccccccc....this program is to find the single attractors of a network.....ccccc
 
 	  last=0
 	  time=0
+
 	  do while(last.eq.0)
-	       time=time+1
-	       ALLOCATE(bfold(ncount,n),bfnew(2*ncount,n))
-	       bfold(1:ncount,1:n)=bfnew1(1:ncount,1:n)
+				time=time+1
+				ALLOCATE(bfold(ncount,n),bfnew(2*ncount,n))
+				bfold(1:ncount,1:n)=bfnew1(1:ncount,1:n)
+        DEALLOCATE (bfnew1)
+	
+        call bfinal(bfnew,newcount,bfold,ncount,peak,gm,rm,n)
+				ALLOCATE(bfnew1(newcount,n))
+	      bfnew1=0
+	      last=1
+	      newcount1=0
+c				print *,'result bfnew 1',bfnew(1,1:n)
+c				print *,'result bfnew 2',bfnew(2,1:n)
+	      do i=1,newcount
+	      	ncount1=0
+					do j=1,n
+						if (bfnew(i,j)<-5)then
+							last=0
+							ncount1=ncount1+1
+							goto 110
+						endif
+					enddo
 
-             DEALLOCATE (bfnew1)
-
-             call bfinal(bfnew,newcount,bfold,ncount,peak,gm,rm,n)
-
-
-             ALLOCATE(bfnew1(newcount,n))
-	       bfnew1=0
-	       last=1
-	       newcount1=0
-	       do i=1,newcount
-	          ncount1=0
-	          do j=1,n
-	             if (bfnew(i,j)<-5)then
-			       last=0
-	               ncount1=ncount1+1
-	               goto 110
-			     endif
-	          enddo
-
-	         if(ncount1.eq.0)then
-	           nbas=nbas+1
-	           dtraj(1:n)=bfnew(i,1:n)
-	           write(3,100)real(dtraj(1:n))
-	         endif
+	        if(ncount1.eq.0)then
+	        	nbas=nbas+1
+	          dtraj(1:n)=bfnew(i,1:n)
+	          write(3,100)real(dtraj(1:n))
+	        endif
             
-110	         if(ncount1.ge.1)then
-	           newcount1=newcount1+1
-                 bfnew1(newcount1,1:n)=bfnew(i,1:n)
-	         endif
+110	      if(ncount1.ge.1)then
+	          newcount1=newcount1+1
+          	bfnew1(newcount1,1:n)=bfnew(i,1:n)
+	        endif
 	      enddo
 
-	   
-c           write(*,*)time,newcount1
-	      ncount=newcount1
+			ncount=newcount1
 
-	      DEALLOCATE(bfold,bfnew)
-
-	      if (ncount>500000)goto 111	       
-	  enddo
+			DEALLOCATE(bfold,bfnew)
+	    if (ncount>500000)goto 111	       
+		enddo
 
 	  if (ncount.le.500000)then
 	     DEALLOCATE (bfnew1)
 	     goto 130
 	  endif
 
-c	  write(*,*)bfnew1(1,1:n)
-c       write(*,*)ncount
+
       
 111     ncount2=ncount
         ALLOCATE(bfnew2(ncount,n))
@@ -141,7 +135,6 @@ c       write(*,*)ncount
 
               call bfinal(bfnew,newcount,bfold,ncount,peak,gm,rm,n)
 
-c	         write(*,*)time,newcount
 
               ALLOCATE(bfnew1(newcount,n))
               bfnew1=0
@@ -183,7 +176,6 @@ c	         write(*,*)time,newcount
         DEALLOCATE (bfnew2)
 
 130	  call cpu_time(t2)
-
 	  write(2,100)t2-t1,real(nbas)
 	  write(*,*)t2-t1,nbas
 
@@ -192,145 +184,141 @@ c	         write(*,*)time,newcount
       end program main
 
 ccccccccccccccccccc.....the rules 1-7.........ccccccccccccccccccccccccccccccccccc
-      subroutine rule(basnew,basold,gm,rm,n,tf)
-      implicit none
-      integer i,j,k
-      integer n
-      integer basold(n),basnew(n)
-      integer gm(n,n),rm(n,n)
+	subroutine rule(basnew,basold,gm,rm,n,tf)
+		implicit none
+		integer i,j,k
+		integer n
+		integer basold(n),basnew(n)
+		integer gm(n,n),rm(n,n)
+				
+		integer tfp,tf
+		integer logi,pan
       
-	integer tfp,tf
-	integer logi,pan
-      
-	tfp=1
-      basnew=basold
-      do i=1,n
-         !rule 1��if S_i=1 and r_{ji}=1, then S_j=0;
-         do j=1,n
-            if((j.ne.i).and.(basold(j)*rm(i,j).eq.1))then
-	         if (basnew(i).eq.1)then
-	            tfp=0
-	            goto 10
-	         else
-                  basnew(i)=0
-	         endif
-            endif
-         enddo
+		tfp=1
+		basnew=basold
 
-        if(basold(i)>0)then
-        !rule 2��if S_i=1 and r_{ij}=1, then S_j=0;
-           do j=1,n
-              if(j.ne.i.and.(rm(i,j)>0))then
-	           if (basnew(j).eq.1)then
-	              tfp=0
-	              goto 10
-	           else
-                    basnew(j)=0
-	           endif
-              endif
-           enddo
+		do i=1,n
+			!rule 1��if S_i=1 and r_{ji}=1, then S_j=0;
 
-        !rule 3�� if S_i=1, r_{ii}=1, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=1;
-           if(rm(i,i)>0)then
-             logi=0
-             do j=1,n
-                if(j.ne.i)then
-                  logi=logi+basold(j)*gm(i,j)
+			do j=1,n
+				if((j.ne.i).and.(basold(j)*rm(i,j).eq.1))then
+					if (basnew(i).eq.1)then
+						tfp=0
+						goto 10
+					else
+						basnew(i)=0
+					endif
+				endif
+			enddo
+			if(basold(i)>0)then
+				!rule 2��if S_i=1 and r_{ij}=1, then S_j=0;
+				do j=1,n
+					if(j.ne.i.and.(rm(i,j)>0))then
+						if (basnew(j).eq.1)then
+							tfp=0
+							goto 10
+						else
+							basnew(j)=0
+						endif
+					endif
+				enddo
 
-                  if (basold(j)*gm(i,j)>0)then
-                    k=j
-                  endif
-                endif
-             enddo
+				!rule 3�� if S_i=1, r_{ii}=1, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=1;
+				if(rm(i,i)>0)then
+					logi=0
+					do j=1,n
+						if(j.ne.i)then
+							logi=logi+basold(j)*gm(i,j)
 
-             if(logi.eq.1)then
-	          if (basnew(k).eq.0)then
-	            tfp=0
-	            goto 10
-	          else
-                  basnew(k)=1
-	          endif
-             endif
-           endif
+							if (basold(j)*gm(i,j)>0)then
+								k=j
+							endif
+						endif
+					enddo
 
-        endif
-      
-         !rule 5��if r_{ii}=1 and \sum_{j\ne i ({S_j}g_{ij})=0, then S_i=0;
-         if (rm(i,i)>0)then
-            pan=1
-            do j=1,n
-               if (j.ne.i)then
-							 		if (pan>=1)then
-										if (gm(i,j)*basold(j).eq.0)then
-											pan = 1
-										else 
-											pan = 0
-										endif
-									endif
-                  !pan=pan.and.(gm(i,j)*basold(j).eq.0)
-               endif
-            enddo
+					if(logi.eq.1)then
+						if (basnew(k).eq.0)then
+							tfp=0
+							goto 10
+						else
+							basnew(k)=1
+						endif
+					endif
+				endif
+			endif
+			!OUTRO IF AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII
+			!rule 5��if r_{ii}=1 and \sum_{j\ne i ({S_j}g_{ij})=0, then S_i=0;
+			if (rm(i,i)>0)then
+				pan=1
+				do j=1,n
+					if (j.ne.i)then
+						if (pan>=1)then
+							if (gm(i,j)*basold(j).eq.0)then
+								pan = 1
+							else 
+								pan = 0
+							endif
+						endif
+								!pan=pan.and.(gm(i,j)*basold(j).eq.0)
+					endif
+				enddo
+				if(pan>0)then
+					if (basnew(i).eq.1)then
+						tfp=0
+						goto 10
+					else
+						basnew(i)=0
+					endif
+				endif
+			endif
 
-           if(pan>0)then
-	        if (basnew(i).eq.1)then
-	            tfp=0
-	            goto 10
-	        else
-                  basnew(i)=0
-	        endif
-           endif
-         endif
+			pan=1      
+			do j=1,n
+				if (j.ne.i)then
+					if (pan>=1)then
+						if (rm(i,j)*basold(j).eq.0)then
+							pan = 1
+						else 
+							pan = 0
+						endif
+					endif
+					!pan=pan.and.(rm(i,j)*basold(j).eq.0)
+				endif
+			enddo
 
-           pan=1      
-           do j=1,n
-              if (j.ne.i)then
-									if (pan>=1)then
-										if (rm(i,j)*basold(j).eq.0)then
-											pan = 1
-										else 
-											pan = 0
-										endif
-									endif
-                 !pan=pan.and.(rm(i,j)*basold(j).eq.0)
-              endif
-           enddo
+	!rule 6�� if g_{ii}=1 and \sum_{j\ne i} ({S_j}r_{ij})=0, then S_i=1;
+	!rule 7��if \sum_{j\ne i} ({S_j}r_{ij})=0, and there is a node j_0 such that S_{j_0}g_{ij_0}=1, then S_i=1.
+			logi=0
+			do j=1,n
+				if((j.ne.i).and.(basold(j)*gm(i,j).eq.1))then
+					logi=logi+1
+				endif
+			enddo
+			logi=logi+gm(i,i)
 
-        !rule 6�� if g_{ii}=1 and \sum_{j\ne i} ({S_j}r_{ij})=0, then S_i=1;
+			if((logi>0).and.(pan>0))then
+				if (basnew(i).eq.0)then
+					tfp=0
+					goto 10
+				else
+					basnew(i)=1
+				endif
+			endif
 
-	  !rule 7��if \sum_{j\ne i} ({S_j}r_{ij})=0, and there is a node j_0 such that S_{j_0}g_{ij_0}=1, then S_i=1.
-
-	   logi=0
-	   do j=1,n
-	      if((j.ne.i).and.(basold(j)*gm(i,j).eq.1))then
-	            logi=logi+1
-	      endif
-	   enddo
-         logi=logi+gm(i,i)
-
-	   if((logi>0).and.(pan>0))then
-	      if (basnew(i).eq.0)then
-	          tfp=0
-	          goto 10
-	      else
-                basnew(i)=1
-	      endif
-	   endif
-
-	   !rule 4��if S_i=0 and \sum_{j\ne i} ({S_j}r_{ij})=0, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=0;
-	   if((basold(i).eq.0).and.(pan>0))then
-	       do j=1,n
-	          if((j.ne.i).and.(gm(i,j)>0))then
-	             if(basnew(j).eq.1)then
-	                tfp=0
-	                goto 10
-	             else
-	                basnew(j)=0
-	             endif
-	          endif
-	       enddo
-	    endif
-	           
-      enddo
+			!rule 4��if S_i=0 and \sum_{j\ne i} ({S_j}r_{ij})=0, g_{ij_0}=1 and \sum_{j\ne j_0}({S_j}g_{ij})=0, then S_{j_0}=0;
+			if((basold(i).eq.0).and.(pan>0))then
+				do j=1,n
+					if((j.ne.i).and.(gm(i,j)>0))then
+						if(basnew(j).eq.1)then
+							tfp=0
+							goto 10
+						else
+							basnew(j)=0
+						endif
+					endif
+				enddo
+			endif
+		enddo
       
 10    tf=tfp
       end subroutine rule
@@ -400,36 +388,34 @@ ccccccc......step 3.......ccccccccccccccccccccccccccccccccccc
 
       basin2=0
 	do ii=1,2
-         basold=basoldintial
-	   if(ii.eq.1)then
-	     basold(peakcheck)=1
-	   else
-	     basold(peakcheck)=0
-	   endif
-	
-      tf=1
-	do while(tf.eq.1)
-	   basnew=0
-	   call rule(basnew,basold,gm,rm,n,tf)
-      
-	   if(tf.eq.0)then
-	      basin2(ii,1:n)=10
-	   else
-	      tch=0
+		basold=basoldintial
+			if(ii.eq.1)then
+				basold(peakcheck)=1
+			else
+				basold(peakcheck)=0
+			endif
+			tf=1
+		do while(tf.eq.1)
+	  	basnew=0
+	  	call rule(basnew,basold,gm,rm,n,tf)
+	  	if(tf.eq.0)then
+	    	basin2(ii,1:n)=10
+	   	else
+	    	tch=0
 	      do i=1,n
-		     if(basold(i).ne.basnew(i))then
-			   tch=tch+1
-	         endif
+		    	if(basold(i).ne.basnew(i))then
+			  		tch=tch+1
+	      	endif
 	      enddo
 
 	      if(tch.eq.0)then
-	         tf=0
-               basin2(ii,1:n)=basnew(1:n)
+	        	tf=0
+          	basin2(ii,1:n)=basnew(1:n)
 	      endif
-	   endif
+	   	endif
 	        
-	   basold=basnew
-	enddo
+	  	basold=basnew
+		enddo
 	enddo
       
 	endsubroutine step
@@ -449,31 +435,27 @@ ccccccc......step 3.......ccccccccccccccccccccccccccccccccccc
       
 	integer bfnew(2*ncount,n)
 	integer newcount
-      
 	bfnew=0
 	newcount=0
-      do i=1,ncount
-         basoldintial(1:n)=bfold(i,1:n)
+	do i=1,ncount
+		basoldintial(1:n)=bfold(i,1:n)
 
-	   positold=-1
-         peakcheck=0
-	   do j=1,n
-	      if((basoldintial(j)<-5).and.(positold<peak(j)))then
-	         positold=peak(j)
-	         peakcheck=j
-	      endif	      
-	   enddo
-
-
-	    call step(basin2,basoldintial,peakcheck,gm,rm,n)
-	      do k=1,2
-		     if(basin2(k,1)<5)then
-                  newcount=newcount+1
-                  bfnew(newcount,1:n)=basin2(k,1:n)
-	         endif
-	      enddo
+		positold=-1
+		peakcheck=0
+		do j=1,n
+				if((basoldintial(j)<-5).and.(positold<peak(j)))then
+					positold=peak(j)
+					peakcheck=j
+				endif	      
+		enddo
+		call step(basin2,basoldintial,peakcheck,gm,rm,n)
+		do k=1,2
+			if(basin2(k,1)<5)then
+				newcount=newcount+1
+				bfnew(newcount,1:n)=basin2(k,1:n)
+			endif
+		enddo
 	enddo
-
       end subroutine bfinal
 
 
