@@ -41,7 +41,7 @@ ccccccc....this program is to find preimages of any state.....ccccc
 	   staold(i)=-100
 	enddo
 
-	state(2)=1
+c	state(2)=1
 	state(5)=1
 	state(9)=1
 
@@ -119,7 +119,7 @@ c	write(*,*)stanew
 	stanew=staold
       tfp=1
 	do i=1,n      
-	   !rule 1£ºif S_i(t+1)=1
+	   !rule 1ï¿½ï¿½if S_i(t+1)=1
 	   if (state(i).eq.1)then  
 
 	      !rule 1.1: $r_{ij}=1$, then $S_j=0$;
@@ -180,7 +180,7 @@ c	write(*,*)stanew
 	       endif
 
              
-             !¹æÔò1.5: if $r_{ii}=1$ and $\sum_{j\ne i}({S_j}g_{ij})=0$, then the current state $S(t)$ is not a pre-image.
+             !ï¿½ï¿½ï¿½ï¿½1.5: if $r_{ii}=1$ and $\sum_{j\ne i}({S_j}g_{ij})=0$, then the current state $S(t)$ is not a pre-image.
              if ((panduan.eq.0).and.(rm(i,i)>0))then
 	           tfp=0
 	           goto 1001
@@ -190,21 +190,21 @@ c	write(*,*)stanew
 	enddo
 
 
-	   !rule 2£ºÈôS_i(t+1)=0£¬ÇÒi²»ÊÜÓÐÐ§ÒÖÖÆ×÷ÓÃ:  ¹æÔò2.1,Èôj´Ù½øi£¬ÔòS_j(t)=0;
-	   !                                           ¹æÔò2.2£¬Èôg_ii=0ÇÒr_ii=0,ÔòS_i(t)=0;
-	   !                                           ¹æÔò2.3£¬Èôg_ii=1£¬ÔòÃ¬¶Ü
-	   !       ÈôS_i(t+1)=0£¬ÇÒÖ»ÓÐÒ»¸öS_j(t)*rm(i,j).ne.0: ¹æÔò2.4£¬Èô¶ÔiµÄÓÐÐ§´Ù½ø×÷ÓÃ·ÇÁã£¬»òÊÇiÓÐ×Ô´Ù½ø×÷ÓÃ£¬ÔòS_j(t)=1;   
+	   !rule 2ï¿½ï¿½ï¿½ï¿½S_i(t+1)=0ï¿½ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½:  ï¿½ï¿½ï¿½ï¿½2.1,ï¿½ï¿½jï¿½Ù½ï¿½iï¿½ï¿½ï¿½ï¿½S_j(t)=0;
+	   !                                           ï¿½ï¿½ï¿½ï¿½2.2ï¿½ï¿½ï¿½ï¿½g_ii=0ï¿½ï¿½r_ii=0,ï¿½ï¿½S_i(t)=0;
+	   !                                           ï¿½ï¿½ï¿½ï¿½2.3ï¿½ï¿½ï¿½ï¿½g_ii=1ï¿½ï¿½ï¿½ï¿½Ã¬ï¿½ï¿½
+	   !       ï¿½ï¿½S_i(t+1)=0ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½Ò»ï¿½ï¿½S_j(t)*rm(i,j).ne.0: ï¿½ï¿½ï¿½ï¿½2.4ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ù½ï¿½ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½Ô´Ù½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½ï¿½ï¿½S_j(t)=1;   
 	   
 	   
 
 
-	 !rule 2.1£ºif $\sum_{j\ne i} ({S_j}r_{ij})=0$ and there is a node $j_0$ such that $g_{ij_0}=1$, then $S_{j_0}=0$;
+	 !rule 2.1ï¿½ï¿½if $\sum_{j\ne i} ({S_j}r_{ij})=0$ and there is a node $j_0$ such that $g_{ij_0}=1$, then $S_{j_0}=0$;
 	 do i=1,n                              
          if (state(i).eq.0)then  !if_state2.1
 	      logi=1
 	      do j=1,n
 	         if (j.ne.i)then
-	            logi=logi.and.(stanew(j)*rm(i,j).eq.0)
+	            logi=(logi > 0).and.(stanew(j)*rm(i,j).eq.0)
 	         endif
 	      enddo
 
@@ -253,7 +253,7 @@ c	write(*,*)stanew
 	        endif
 
     
-               !rule 2.5£ºif $g_{ii}=1$ and $\sum_{j\ne i} ({S_j}r_{ij})=0$, then the current state $S(t)$ is not a pre-image;
+               !rule 2.5ï¿½ï¿½if $g_{ii}=1$ and $\sum_{j\ne i} ({S_j}r_{ij})=0$, then the current state $S(t)$ is not a pre-image;
               if(gm(i,i)>0)then        
 	           tfp=0
 	            goto 1001
@@ -262,7 +262,7 @@ c	write(*,*)stanew
 	      endif    !endif_logi2.2
 
 
-            !rule 2.3 and 2.4£ºif $r_{ij_0}=1$, and $\sum_{j\ne j_0} ({S_j}r_{ij})=0$,and $g_{ii}=1$ or there is a node $j_0^{'}$ such that $S_jg_{ij_0^{'}}=1$, then $S_{j_0}=1$;
+            !rule 2.3 and 2.4ï¿½ï¿½if $r_{ij_0}=1$, and $\sum_{j\ne j_0} ({S_j}r_{ij})=0$,and $g_{ii}=1$ or there is a node $j_0^{'}$ such that $S_jg_{ij_0^{'}}=1$, then $S_{j_0}=1$;
             if(panduan.eq.1)then   !if_logi2.4
 	        logi=0
 	        do j=1,n
